@@ -1,7 +1,3 @@
-Here’s a summary for your `README.md` file in the `seneca/issuer/decentralized` folder, focusing on the ongoing Bachelor thesis work on threshold signatures and decentralized issuers:
-
----
-
 # Decentralized Issuer with Threshold Signatures
 
 This project is part of ongoing research within the Seneca framework, aiming to develop a secure and decentralized credential issuance system using threshold signatures. The work focuses on enhancing the resilience of decentralized issuers by distributing private key control across multiple entities, ensuring that no single point of failure can compromise the system.
