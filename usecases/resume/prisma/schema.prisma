@@ -1,0 +1,61 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String @id @default(uuid())
+  email     String   @unique
+  firstName String
+  lastName  String
+  password  String
+  image     String?
+  CVs       CV[] 
+  applications JobApplication[]
+}
+
+model Company {
+  id           String @id @default(uuid())
+  name         String
+  email        String  @unique
+  password     String
+  logo         String?
+  jobs         Job[]
+}
+
+model Job {
+  id          String @id @default(uuid())
+  position       String
+  description String
+  requirements String[]
+  location      String?
+  company     Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  companyId   String
+  applications JobApplication[]
+}
+
+model JobApplication {
+  id        String @id @default(uuid())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  job       Job      @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  jobId     String
+  cv        CV       @relation(fields: [cvId], references: [id], onDelete: Cascade)
+  cvId      String
+  createdAt DateTime @default(now())
+  status    String   @default("in review")
+  vpRequestLink String?
+}
+
+model CV {
+  id          String @id @default(uuid())
+  file_name   String
+  cv          Json
+  user        User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId      String
+  applications JobApplication[]
+}

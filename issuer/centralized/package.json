@@ -1,0 +1,21 @@
+{
+  "name": "issuer",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "base64url": "^3.0.1",
+    "cors": "^2.8.5",
+    "express": "^4.19.2",
+    "jose": "^5.4.0",
+    "jsonwebtoken": "^9.0.2",
+    "prettier": "^3.3.2",
+  }
+}
