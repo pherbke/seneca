@@ -31,3 +31,6 @@ Clone the repository:
 ```bash
 git clone https://github.com/yourusername/seneca.git
 cd seneca
+
+### License
+This project is licensed under the Apache License 2.0 - see the LICENSE file for details.
