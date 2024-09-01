@@ -7,7 +7,7 @@ Seneca is a research-driven project aimed at developing a decentralized credenti
 The Seneca project integrates the following core components:
 
 ### Threshold Signature Schemes (TSS)
-Seneca employs Threshold Signature Schemes to decentralize the credential issuance process. TSS allows a distributed group of issuers to collaboratively sign credentials without any single issuer holding complete control. This approach enhances the security and trustworthiness of the credentialing system by eliminating single points of failure.
+Seneca employs Threshold Signature Schemes to decentralize the credential issuance process. TSS allows a distributed group of issuers to collaboratively sign credentials without any single issuer holding complete control. This approach enhances the security and trustworthiness of the credentialing system by eliminating single points of failure. Additionally, a consortium of issuers maintains the status of verifiable credentials in real-time. The status of credentials is stored on decentralized data structures such as IPFS.
 
 ### Zero-Knowledge Proofs (ZKP)
 Zero-Knowledge Proofs are utilized in Seneca to enable the privacy-preserving verification of credentials. With ZKP, users can prove the validity of their credentials without revealing any additional information, ensuring that personal data remains secure during the verification process. This component is crucial for maintaining user anonymity while still providing verifiable claims.
@@ -15,6 +15,7 @@ Zero-Knowledge Proofs are utilized in Seneca to enable the privacy-preserving ve
 ## Key Features
 
 - **Decentralized Issuance**: Utilizing TSS to ensure that credentials are issued through a collaborative process involving multiple issuers.
+- **Real-Time Status Maintenance**: A consortium of issuers maintains the status of verifiable credentials in real-time, stored on decentralized data structures such as IPFS.
 - **Privacy-Preserving Verification**: Leveraging ZKP to allow for anonymous verification of claims, protecting user privacy.
 - **Scalable Infrastructure**: Designed to be scalable and applicable across various credentialing scenarios and industries.
 
