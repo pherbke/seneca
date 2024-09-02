@@ -1,8 +1,14 @@
 ![Seneca Logo](seneca.png)
 # Seneca: Secure ENvironment for Encrypted Credential Assurance
 
-
 Seneca is a research-driven project aimed at developing a decentralized credential lifecycle management system using advanced cryptographic techniques. The project focuses on two primary components: Threshold Signature Schemes (TSS) for decentralized credential issuance and Zero-Knowledge Proofs (ZKP) for privacy-preserving verification of credentials. This work is part of ongoing PhD research exploring secure and decentralized methods for managing digital credentials.
+
+## Philosophy
+
+"It is not because things are difficult that we do not dare; it is because we do not dare that things are difficult."  
+— *Seneca, Epistulae Morales ad Lucilium*, Letter 104
+
+At the core of our project lies the Stoic principle embodied in Seneca's quote. The challenges we face are not insurmountable, but rather, our courage and initiative determine our success. This philosophy drives our commitment to tackling complex problems and pushing the boundaries of what is possible.
 
 ## Overview
 
