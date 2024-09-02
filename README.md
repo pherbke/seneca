@@ -1,4 +1,6 @@
+![Seneca Logo](seneca.png)
 # Seneca: Secure ENvironment for Encrypted Credential Assurance
+
 
 Seneca is a research-driven project aimed at developing a decentralized credential lifecycle management system using advanced cryptographic techniques. The project focuses on two primary components: Threshold Signature Schemes (TSS) for decentralized credential issuance and Zero-Knowledge Proofs (ZKP) for privacy-preserving verification of credentials. This work is part of ongoing PhD research exploring secure and decentralized methods for managing digital credentials.
 
