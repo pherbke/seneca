@@ -59,9 +59,12 @@ The project is structured into multiple modules, each containing specific compon
   - `studentid`: Contains the implementation for student ID verifiable credentials for student cards.
 
 ## Demos
-### Resumé Credentials Demo
-  <details><summary>Click to see the Resume Credentials Demo</summary>
-  ![Resume Demo](assets/resume.gif)</details>
+### Resumé Credentials
+  <details>
+    <summary>Click to see the Resume Credentials Demo</summary>
+
+![Resume Demo](./assets/resume.gif)
+  </details>
 
 ## Contributing
 
