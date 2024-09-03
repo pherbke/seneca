@@ -1,4 +1,4 @@
-![Seneca Logo](seneca.png)
+![Seneca Logo](assets/seneca.png)
 # Seneca: Secure ENvironment for Encrypted Credential Assurance
 
 Seneca is a research-driven project aimed at developing a decentralized credential lifecycle management system using advanced cryptographic techniques. The project focuses on two primary components: Threshold Signature Schemes (TSS) for decentralized credential issuance and Zero-Knowledge Proofs (ZKP) for privacy-preserving verification of credentials. This work is part of ongoing PhD research exploring secure and decentralized methods for managing digital credentials.
@@ -31,9 +31,6 @@ Zero-Knowledge Proofs are utilized in Seneca to enable the privacy-preserving ve
 
 ### Prerequisites
 - Node.js and npm (for running the JavaScript components)
-- Python (for any auxiliary scripts)
-- Git (for cloning and managing the repository)
-- Docker (for running the Dockerized components)
 
 ### Installation
 
@@ -48,7 +45,7 @@ Zero-Knowledge Proofs are utilized in Seneca to enable the privacy-preserving ve
     yarn install
     ```
 
-### Usage
+### Content
 
 The project is structured into multiple modules, each containing specific components. The main modules are as follows:
 
@@ -60,6 +57,11 @@ The project is structured into multiple modules, each containing specific compon
 - `use_case`: Contains use case implementations and examples demonstrating how to use the Seneca system for various scenarios.
   - `resume`: Contains the implementation for verifiable resume credentials.
   - `studentid`: Contains the implementation for student ID verifiable credentials for student cards.
+
+## Demos
+### Resumé Credentials Demo
+  <details><summary>Click to see the Resume Credentials Demo</summary>
+  ![Resume Demo](assets/resume.gif)</details>
 
 ## Contributing
 
