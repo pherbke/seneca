@@ -62,20 +62,6 @@ The project is structured into multiple modules, each containing specific compon
   - `resume`: Contains the implementation for verifiable resume credentials.
   - `studentid`: Contains the implementation for student ID verifiable credentials for student cards.
 
-To run the project, follow these steps:
-
-1. Start the API server:
-    ```bash
-    cd api
-    yarn start
-    ```
-
-2. Start the client application:
-    ```bash
-    cd client
-    yarn start
-    ```
-
 ## Contributing
 
 We welcome contributions to the Seneca project. Please see the `CONTRIBUTING.md` file for more details on how to get started.
