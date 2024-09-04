@@ -59,7 +59,7 @@ app.get("/jwks", (req,res) => {
   res.json({
     keys: [
       { ...jwks, kid: `did:ebsi:zrZZyoQVrgwpV1QZmRUHNPz#sig-key`, use: "sig" },
-      { ...jwks, kid: `did:ebsi:zrZZyoQVrgwpV1QZmRUHNPz#authentication-key`, use: "keyAgreement" }, //key to encrypt the sd-jwt response])
+      { ...jwks, kid: `did:ebsi:zrZZyoQVrgwpV1QZmRUHNPz#authentication-key`, use: "keyAgreement" }
     ],
   });
 })
