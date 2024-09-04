@@ -1,0 +1,12 @@
+version: "2"
+authtoken: #ADD your api key here
+tunnels:
+  issuer:
+    proto: http
+    addr: 7002
+  resume-dapp:
+    proto: http
+    addr: 3000
+  authServer:
+    proto: http
+    addr: 7001
