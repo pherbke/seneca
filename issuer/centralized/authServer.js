@@ -1,19 +1,18 @@
 import express from "express";
 import cors from "cors";
 import fs from "fs";
-import { generateNonce, base64UrlEncodeSha256 } from "./cryptoUtils.js";
-
-import { generateAccessToken, buildIdToken } from "./tokenUtils.js";
+import { generateNonce, base64UrlEncodeSha256, pemToJWK } from "./cryptoUtils.js";
+import { generateAccessToken } from "./tokenUtils.js";
 import jwt, { decode } from "jsonwebtoken";
+import 'dotenv/config'
 
 const app = express();
 const port = 7001;
+const serverURL = process.env.SERVER_URL //"https://3f34-149-233-55-5.ngrok-free.app";
+const authServerURL = process.env.AUTHSERVER_URL //"https://a3cb-149-233-55-5.ngrok-free.app";
 
-const serverURL = "https://3f34-149-233-55-5.ngrok-free.app";
-const authServerURL = "https://a3cb-149-233-55-5.ngrok-free.app";
-
-const privateKey = fs.readFileSync("./certs/private.pem", "utf8");
-const publicKey = fs.readFileSync("./certs/public.pem", "utf8");
+const privateKey = fs.readFileSync("./certs/demo_private.pem", "utf8");
+const publicKey = fs.readFileSync("./certs/demo_public.pem", "utf8");
 
 // In-memory storage
 const authorizationCodes = new Map();
@@ -54,6 +53,17 @@ app.post("/verifyAccessToken", (req, res) => {
   });
 });
 
+const jwks = pemToJWK(publicKey, "public")
+
+app.get("/jwks", (req,res) => {
+  res.json({
+    keys: [
+      { ...jwks, kid: `did:ebsi:zrZZyoQVrgwpV1QZmRUHNPz#sig-key`, use: "sig" },
+      { ...jwks, kid: `did:ebsi:zrZZyoQVrgwpV1QZmRUHNPz#authentication-key`, use: "keyAgreement" }, //key to encrypt the sd-jwt response])
+    ],
+  });
+})
+
 app.get("/.well-known/openid-configuration", (req, res) => {
   const config = {
     issuer: `${serverURL}`,
@@ -92,7 +102,7 @@ app.get("/.well-known/openid-configuration", (req, res) => {
       "attester_signed_id_token",
     ],
   };
-  res.status(200).send(config);
+  res.type("application/json").send(config);
 });
 
 app.get("/authorize", (req, res) => {
@@ -151,7 +161,7 @@ app.get("/authorize", (req, res) => {
   const header = {
     typ: "jwt",
     alg: "ES256",
-    kid: `did:ebsi:zrZZyoQVrgwpV1QZmRUHNPz#key-2`,
+    kid: `did:ebsi:zrZZyoQVrgwpV1QZmRUHNPz#sig-key`,
   };
 
   const requestJar = jwt.sign(payload, privateKey, {

@@ -82,7 +82,7 @@ export function buildVpRequestJwt(
 
   const header = {
     alg: "ES256",
-    kid: `did:ebsi:zrZZyoQVrgwpV1QZmRUHNPz#key-2`,
+    kid: `did:ebsi:zrZZyoQVrgwpV1QZmRUHNPz#sig-key`,
   };
 
   const token = jwt.sign(jwtPayload, privateKey, {

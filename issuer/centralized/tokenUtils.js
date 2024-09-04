@@ -1,8 +1,10 @@
 import jwt from "jsonwebtoken";
 import fs from "fs";
+import 'dotenv/config'
+import { randomInt } from "crypto";
 
-const privateKey = fs.readFileSync("./certs/private.pem", "utf8");
-const serverURL = "https://9f2f-149-233-55-5.ngrok-free.app";
+const privateKey = fs.readFileSync("./certs/demo_private.pem", "utf8");
+const serverURL = process.env.SERVER_URL 
 
 export function generateAccessToken(sub, credential_identifier) {
   const payload = {
@@ -23,12 +25,12 @@ export function generateAccessToken(sub, credential_identifier) {
 export function buildIdToken(aud) {
   const payload = {
     iss: `${serverURL}`,
-    sub: "user123",
+    sub: `${serverURL}`,
     aud: aud,
     exp: Math.floor(Date.now() / 1000) + 60 * 60,
     iat: Math.floor(Date.now() / 1000),
     auth_time: Math.floor(Date.now() / 1000) - 60 * 5,
-    nonce: "nonceValue",
+    nonce: randomInt(41435234),
   };
 
   const idToken = jwt.sign(payload, privateKey, {

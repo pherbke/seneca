@@ -29,7 +29,6 @@ out/
 
 # Miscellaneous
 .DS_Store
-*.pem
 
 # Local environment files
 .env

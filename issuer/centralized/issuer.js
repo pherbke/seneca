@@ -4,10 +4,11 @@ import jwt from "jsonwebtoken";
 import fs from "fs";
 import { generateNonce } from "./cryptoUtils.js";
 import { randomUUID } from "crypto";
+import 'dotenv/config'
 
-const serverURL = "https://3f34-149-233-55-5.ngrok-free.app";
-const authServerURL = "https://a3cb-149-233-55-5.ngrok-free.app";
-const privateKey = fs.readFileSync("./certs/private.pem", "utf8");
+const serverURL = process.env.SERVER_URL 
+const authServerURL = process.env.AUTHSERVER_URL 
+const privateKey = fs.readFileSync("./certs/demo_private.pem", "utf8");
 
 const app = express();
 const port = 7002;
@@ -84,7 +85,7 @@ app.post("/credential", authenticateToken, (req, res) => {
   }
   const credentialData = offerMap.get(credential_identifier);
 
-  console.log(credentialData);
+  console.log("cred data: ", credentialData);
   let credentialSubject = credentialData
     ? {
         id: decodedHeaderSubjectDID,
@@ -141,14 +142,16 @@ app.post("/credential", authenticateToken, (req, res) => {
   };
 
   const additionalHeaders = {
-    kid: `did:ebsi:zrZZyoQVrgwpV1QZmRUHNPz#key-2`,
-    typ: "jwt",
+    kid: "aegean#authentication-key",
+    typ: "JWT",
   };
 
   const idtoken = jwt.sign(payload, privateKey, {
     ...signOptions,
-    header: additionalHeaders,
+    header: additionalHeaders, 
   });
+
+  console.log(idtoken)
 
   res.json({
     format: "jwt_vc",
@@ -170,17 +173,16 @@ app.get("/.well-known/openid-credential-issuer", (req, res) => {
     },
     display: [
       {
-        name: "Trust CV", //"Technical University of Berlin",
+        name: "Technical University of Berlin",
         locale: "en-US",
         logo: {
-          url: "https://8cb0-149-233-55-5.ngrok-free.app/_next/image?url=%2Ftrust-cv-logo.png&w=256&q=75",
-          //url: "https://logowik.com/content/uploads/images/technischen-universitat-berlin1469.jpg",
+          url: "https://logowik.com/content/uploads/images/technischen-universitat-berlin1469.jpg",
         },
       },
     ],
     credential_configurations_supported: {
       UniversityDegreeCredential: {
-        format: "jwt_vc_json",
+        format: "jwt_vc",
         scope: "UniversityDegree",
         cryptographic_binding_methods_supported: ["did:example"],
         credential_signing_alg_values_supported: ["ES256"],
@@ -238,7 +240,7 @@ app.get("/.well-known/openid-credential-issuer", (req, res) => {
         ],
       },
       LoginCredentials: {
-        format: "jwt_vc_json",
+        format: "jwt_vc",
         scope: "Login",
         cryptographic_binding_methods_supported: ["did:example"],
         credential_signing_alg_values_supported: ["ES256"],
@@ -322,7 +324,7 @@ app.get("/credential-offer/:id", (req, res) => {
       },
       "urn:ietf:params:oauth:grant-type:pre-authorized_code": {
         "pre-authorized_code": pre_auth_code ?? randomUUID(),
-        user_pin_required: true,
+        user_pin_required: false,
       },
     },
   };
