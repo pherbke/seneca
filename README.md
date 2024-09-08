@@ -12,20 +12,27 @@ At the core of our project lies the Stoic principle embodied in Seneca's quote. 
 
 ## Overview
 
-The Seneca project integrates the following core components:
+Seneca is a research project focused on advancing cryptographic techniques to overcome single points of failure typically found in traditional systems reliant on centralized certificate authorities. Seneca aims to provide a more resilient and decentralized approach to credential lifecycle management by distributing trust among a consortium. Through threshold signature schemes (TSS), Seneca enables consortium-driven issuance, revocation, and suspension of verifiable credentials. Credential issuance is handled via partial signatures from multiple entities, ensuring no single party has complete control. Importantly, information related to the credentials is only accessible to the designated issuer, enhancing security and privacy.
 
-### Threshold Signature Schemes (TSS)
-Seneca employs Threshold Signature Schemes to decentralize the credential issuance process. TSS allows a distributed group of issuers to collaboratively sign credentials without any single issuer holding complete control. This approach enhances the security and trustworthiness of the credentialing system by eliminating single points of failure. Additionally, a consortium of issuers maintains the status of verifiable credentials in real-time. The status of credentials is stored on decentralized data structures such as IPFS.
+Seneca employs zero-knowledge proofs (ZKP) to verify credentials in a privacy-preserving manner. Zero-knowledge proofs allow credential holders to prove the validity of their credentials without exposing sensitive personal information, ensuring a secure and confidential verification process. By combining threshold signatures and zero-knowledge proofs, Seneca provides a robust, privacy-focused solution for decentralized, secure management of verifiable credentials across various use cases.
 
-### Zero-Knowledge Proofs (ZKP)
-Zero-Knowledge Proofs are utilized in Seneca to enable the privacy-preserving verification of credentials. With ZKP, users can prove the validity of their credentials without revealing any additional information, ensuring that personal data remains secure during the verification process. This component is crucial for maintaining user anonymity while still providing verifiable claims.
+Seneca supports verifiable credentials across various use cases, including identity verification, academic qualifications, and professional certifications.
+### Key Components
+
+The key components of seneca are as follows:
+
+#### Threshold Signature Schemes (TSS)
+Seneca employs TSS to decentralize the credential issuance process. TSS allows a distributed group of issuers to collaboratively sign credentials without any single issuer holding complete control. This approach enhances the security and trustworthiness of the credentialing system by eliminating single points of failure. Additionally, a consortium of issuers maintains the status of verifiable credentials in real-time. The status of credentials is stored on decentralized data structures such as IPFS.
+
+#### Zero-Knowledge Proofs (ZKP)
+ZKPs are utilized in Seneca to enable the privacy-preserving verification of credentials. With ZKP, users can prove the validity of their credentials without revealing any additional information, ensuring that personal data remains secure during the verification process. This component is crucial for maintaining user anonymity while still providing verifiable claims.
 
 ## Key Features
 
 - **Decentralized Issuance**: Utilizing TSS to ensure that credentials are issued through a collaborative process involving multiple issuers.
-- **Real-Time Status Maintenance**: A consortium of issuers maintains the status of verifiable credentials in real-time, stored on decentralized data structures such as IPFS.
+- **Real-Time Status Maintenance**: A consortium of issuers maintains the status of verifiable credentials in real-time, stored on decentralized data structures such as IPFS. Status of credentials can be valid, revoked, suspended, unsuspended.
 - **Privacy-Preserving Verification**: Leveraging ZKP to allow for anonymous verification of claims, protecting user privacy.
-- **Scalable Infrastructure**: Designed to be scalable and applicable across various credentialing scenarios and industries.
+- **Scalable Infrastructure**: Seneca is designed to be scalable and applicable across various domains and credentialing scenarios.
 
 ## Getting Started
 
@@ -39,7 +46,7 @@ Zero-Knowledge Proofs are utilized in Seneca to enable the privacy-preserving ve
     git clone https://github.com/yourusername/seneca.git
     cd seneca
     ```
-
+   
 #### Use Case Installation
 Currently, the project supports the following use cases:
 
@@ -47,7 +54,7 @@ Currently, the project supports the following use cases:
     ```bash
     cd usecases/resume
     ```
-Detailed info in the README.md file in the respective use case directory.
+Requirements and intallation instructions are in the README.md file in the respective use case directory.
 
 ### Content
 
