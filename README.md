@@ -40,25 +40,34 @@ Zero-Knowledge Proofs are utilized in Seneca to enable the privacy-preserving ve
     cd seneca
     ```
 
-2. Install dependencies:
+#### Use Case Installation
+Currently, the project supports the following use cases:
+
+- Resumé credential use case:
     ```bash
-    yarn install
+    cd usecases/resume
     ```
+Detailed info in the README.md file in the respective use case directory.
 
 ### Content
 
 The project is structured into multiple modules, each containing specific components. The main modules are as follows:
 
-- `issuer`: Contains the implementation for credential issuance.
-  - `centralized`: Contains the implementation for centralized credential issuance.
-  - `decentralized`: Contains the Threshold Signature Scheme implementation with a consortium-driven issuer setup for issuing verifiable credentials.
+- `assets`: Contains images and other assets used in the project.
+- `broadcasting`: Contains the implementation for broadcasting messages across the network. (WIP)
 - `holder`: Contains the wallet implementation for credential management by iOS and android users.
-- `verifier/zkp`: Contains the Zero-Knowledge Proof implementation for privacy-preserving verification.
-- `use_case`: Contains use case implementations and examples demonstrating how to use the Seneca system for various scenarios.
+  - `iOS`: Contains the iOS implementation for the wallet.
+  - `android`: Contains the Android implementation for the wallet.
+- `issuer`: Contains the implementation for credential issuance.
+    - `decentralized`: Contains the decentralized issuer implementation.
+    - `centralized`: Contains the centralized issuer implementation.
+- `storage`: Contains the implementation for decentralized storage (of credential status).
+- `usecases`: Contains use case implementations and examples demonstrating how to use the Seneca system for various scenarios.
   - `resume`: Contains the implementation for verifiable resume credentials.
   - `studentid`: Contains the implementation for student ID verifiable credentials for student cards.
+- `verifier/zkp`: Contains the Zero-Knowledge Proof implementation for privacy-preserving verification.
 
-## Demos
+## Use Case Demos
 ### Resumé Credentials
   <details>
     <summary>Click to see the Resume Credentials Demo</summary>
