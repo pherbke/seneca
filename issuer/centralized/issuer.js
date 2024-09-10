@@ -133,7 +133,6 @@ app.post("/credential", authenticateToken, (req, res) => {
         "https://www.w3.org/2018/credentials/v1",
         "https://europa.eu/2018/credentials/eudi/pid/v1",
       ],
-      issuer: "did:ebsi:zrZZyoQVrgwpV1QZmRUHNPz",
       validFrom: new Date(Math.floor(Date.now() / 1000) * 1000).toISOString(),
     },
   };
