@@ -880,12 +880,12 @@ async fn receive_signing_commitment(state: &NodeState, data: SigningCommitmentDa
         signers.contains(&state.node_id) && signers.contains(&data.sender)
     };
 
-    println!(
-        "received signign commmitment {} from {} {}",
-        state.node_id, data.sender, is_selected
-    );
 
     if is_selected {
+        println!(
+            "received signing commitment {} --> {}",
+            data.sender, state.node_id, 
+        );
         let mut db = state.signing_commitments_db.lock().unwrap();
         let sender = data.sender;
         db.insert(sender, data.commitment.clone());
@@ -898,11 +898,11 @@ async fn receive_signing_response(state: &NodeState, data: SigningResponseData) 
         signers.contains(&state.node_id) && signers.contains(&data.sender)
     };
 
-    println!(
-        "received signign response {} from {}",
-        state.node_id, data.sender
-    );
     if is_selected {
+        println!(
+            "received signign response {} --> {}",
+            data.sender, state.node_id, 
+        );
         let mut db = state.signing_responses_db.lock().unwrap();
         let sender = data.sender;
         db.insert(sender, data.response.clone());
