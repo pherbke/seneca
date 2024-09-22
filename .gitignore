@@ -1,4 +1,5 @@
 # Ignore all node_modules folders
+/Users/patrickherbke/IdeaProjects/seneca/issuer/decentralized/dcsm_bbs_plus/README.md
 node_modules/
 
 # Logs
