@@ -1,139 +1,131 @@
-use bls12_381::{G2Affine, G2Projective, Scalar};
-use ff::Field;
-use group::{Curve, Group};
-use rand::rngs::OsRng;
-use serde::{Serialize, Deserialize, Serializer, Deserializer};
-use serde::ser::SerializeStruct;
-use serde::de::{self, Visitor, MapAccess};
-use std::fmt;
+use bls12_381::Scalar;
+use ff::Field; // Required for Scalar::random
+use rand::thread_rng; // For randomness
+use shamirsecretsharing::*; // For Shamir secret sharing
+use std::collections::HashMap;
+use std::convert::TryInto; // For converting slices to arrays
 
-/// A structure to hold secret and public key shares for each participant.
-#[derive(Debug, Clone)]
-pub struct KeyShare {
-    pub index: usize,                  // Participant's index (1-based)
-    pub secret_share: Scalar,          // Scalar value of the secret share
-    pub public_share: G2Projective,    // Public share derived from the secret share
+pub const DATA_SIZE: usize = 64;
+
+/// Represents a participant in the DKG (Distributed Key Generation) process.
+pub struct Participant {
+    pub id: usize,
+    pub key_share: Option<Vec<u8>>,  // Share in Vec<u8> format
+    pub public_share: Option<Vec<u8>>,  // Public share (to be filled later)
 }
 
-// Implement custom serialization for KeyShare
-impl Serialize for KeyShare {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        // Serialize the index
-        let mut state = serializer.serialize_struct("KeyShare", 3)?;
-        state.serialize_field("index", &self.index)?;
-
-        // Serialize Scalar as a 32-byte array
-        let secret_share_bytes = self.secret_share.to_bytes();
-        state.serialize_field("secret_share", &secret_share_bytes)?;
-
-        // Serialize G2Projective in compressed form (96 bytes)
-        let public_share_bytes = self.public_share.to_affine().to_compressed();
-        state.serialize_field("public_share", &public_share_bytes)?;
-
-        state.end()
+impl Participant {
+    /// Creates a new participant with the given ID.
+    pub fn new(id: usize) -> Self {
+        Self {
+            id,
+            key_share: None,
+            public_share: None,
+        }
     }
 }
 
-// Implement custom deserialization for KeyShare
-impl<'de> Deserialize<'de> for KeyShare {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: Deserializer<'de>,
-    {
-        enum Field { Index, SecretShare, PublicShare };
+/// DKG manager for handling key generation and participant management.
+pub struct DKG {
+    pub threshold: usize,
+    pub participants: HashMap<usize, Participant>,  // Maps participant ID to their struct
+    pub master_secret: Option<Vec<u8>>,  // Store master secret as bytes
+}
 
-        struct KeyShareVisitor;
+impl DKG {
+    /// Initializes the DKG system with a given threshold and number of participants.
+    pub fn new(threshold: u8, total_participants: usize) -> Self {
+        let mut participants = HashMap::new();
+        for id in 1..=total_participants {
+            participants.insert(id, Participant::new(id));
+        }
+        Self {
+            threshold: threshold as usize,
+            participants,
+            master_secret: None,
+        }
+    }
 
-        impl<'de> Visitor<'de> for KeyShareVisitor {
-            type Value = KeyShare;
+    /// Generates a cryptographically secure master secret. This should only be called once.
+    pub fn generate_master_secret(&mut self) {
+        let mut rng = thread_rng();
+        let master_secret = Scalar::random(&mut rng);  // Generate a random scalar
 
-            fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
-                formatter.write_str("struct KeyShare")
-            }
+        // Convert the scalar to a byte array and pad it to 64 bytes
+        let mut master_secret_bytes = master_secret.to_bytes().to_vec();
+        master_secret_bytes.resize(DATA_SIZE, 0);  // Pad to 64 bytes
 
-            fn visit_map<V>(self, mut map: V) -> Result<KeyShare, V::Error>
-            where
-                V: MapAccess<'de>,
-            {
-                let mut index = None;
-                let mut secret_share_bytes = None;
-                let mut public_share_bytes = None;
+        self.master_secret = Some(master_secret_bytes);
+    }
 
-                while let Some(key) = map.next_key()? {
-                    match key {
-                        Field::Index => {
-                            if index.is_some() {
-                                return Err(de::Error::duplicate_field("index"));
-                            }
-                            index = Some(map.next_value()?);
-                        }
-                        Field::SecretShare => {
-                            if secret_share_bytes.is_some() {
-                                return Err(de::Error::duplicate_field("secret_share"));
-                            }
-                            secret_share_bytes = Some(map.next_value()?);
-                        }
-                        Field::PublicShare => {
-                            if public_share_bytes.is_some() {
-                                return Err(de::Error::duplicate_field("public_share"));
-                            }
-                            public_share_bytes = Some(map.next_value()?);
-                        }
-                    }
-                }
+    /// Distributes key shares to participants using Shamir Secret Sharing.
+    pub fn distribute_shares(&mut self) -> Result<(), SSSError> {
+        // Ensure the master secret is generated
+        let master_secret = match &self.master_secret {
+            Some(secret) => secret,
+            None => return Err(SSSError::BadInputLen(DATA_SIZE)),
+        };
 
-                let index = index.ok_or_else(|| de::Error::missing_field("index"))?;
-                let secret_share_bytes: [u8; 32] = secret_share_bytes.ok_or_else(|| de::Error::missing_field("secret_share"))?;
-                let public_share_bytes: [u8; 96] = public_share_bytes.ok_or_else(|| de::Error::missing_field("public_share"))?;
+        // Generate shares using Shamir secret sharing
+        let total_participants = self.participants.len() as u8;
+        let shares = create_shares(master_secret, total_participants, self.threshold as u8)?;
 
-                // Convert bytes back to Scalar using from_bytes (note that this could fail if the bytes do not represent a valid scalar)
-                let secret_share = Scalar::from_bytes(&secret_share_bytes)
-                    .ok_or_else(|| de::Error::custom("Failed to convert bytes to Scalar"))?;
-                // Convert bytes back to G2Projective
-                let public_share = G2Affine::from_compressed(&public_share_bytes)
-                    .ok_or_else(|| de::Error::custom("Failed to convert bytes to G2Affine"))?
-                    .into();
-
-                Ok(KeyShare { index, secret_share, public_share })
+        // Distribute the shares to each participant
+        for (i, share) in shares.iter().enumerate() {
+            if let Some(participant) = self.participants.get_mut(&(i + 1)) {
+                participant.key_share = Some(share.clone());  // Store the share for the participant
             }
         }
-
-        const FIELDS: &[&str] = &["index", "secret_share", "public_share"];
-        deserializer.deserialize_struct("KeyShare", FIELDS, KeyShareVisitor)
+        Ok(())
     }
 }
 
-// Generate threshold keys using a simple secret sharing scheme.
-pub fn generate_threshold_keys(n: usize, t: usize) -> (Vec<KeyShare>, G2Projective) {
-    assert!(t <= n, "Threshold must be less than or equal to the number of participants.");
+// TESTS
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use bls12_381::Scalar;
+    use std::convert::TryInto;  // For converting slices to arrays
 
-    // Create a random secret polynomial
-    let mut rng = OsRng;
-    let secret_polynomial: Vec<Scalar> = (0..t).map(|_| Scalar::random(&mut rng)).collect();
+    #[test]
+    fn test_key_generation_and_distribution() {
+        let mut dkg = DKG::new(3, 5);
 
-    // Generate shares and public key
-    let mut shares = Vec::new();
-    for i in 1..=n {
-        let x = Scalar::from(i as u64);
-        let secret_share = evaluate_polynomial(&secret_polynomial, x);
-        let public_share = G2Projective::generator() * secret_share;
-        shares.push(KeyShare {
-            index: i, // Add participant's index
-            secret_share,
-            public_share
-        });
+        // Generate master secret
+        dkg.generate_master_secret();
+
+        // Ensure master secret is generated
+        let secret = dkg.master_secret.clone().unwrap();
+        let secret_array: [u8; 32] = secret[..32].try_into().expect("Failed to convert secret to array");
+        let secret_scalar = Scalar::from_bytes(&secret_array).unwrap();
+        assert!(secret_scalar != Scalar::zero(), "Master secret should not be zero");
+
+        // Distribute shares
+        dkg.distribute_shares().expect("Failed to distribute shares");
+
+        // Ensure each participant has received a key share
+        for participant in dkg.participants.values() {
+            assert!(participant.key_share.is_some(), "Each participant should receive a key share");
+        }
     }
 
-    // Public key derived from the constant term of the polynomial
-    let public_key = G2Projective::generator() * secret_polynomial[0];
+    #[test]
+    fn test_participant_share_as_scalar() {
+        let mut dkg = DKG::new(3, 5);
 
-    (shares, public_key)
-}
+        // Generate master secret and distribute shares
+        dkg.generate_master_secret();
+        dkg.distribute_shares().expect("Failed to distribute shares");
 
-/// Evaluate a polynomial at a given point x.
-fn evaluate_polynomial(coeffs: &[Scalar], x: Scalar) -> Scalar {
-    coeffs.iter().rev().fold(Scalar::zero(), |acc, &coeff| acc * x + coeff)
+        // Get the first participant's key share and convert it to a scalar
+        let key_share = dkg.participants.get(&1).unwrap().key_share.clone().unwrap();
+        let key_share_array: [u8; 32] = key_share[..32].try_into().expect("Failed to convert key share to array");
+
+        // Handle the case where the conversion fails
+        let key_share_scalar = Scalar::from_bytes(&key_share_array);
+        assert!(key_share_scalar.is_some().unwrap_u8() == 1, "Key share should be valid");
+
+        // Ensure that the key share is valid (in this case, not zero)
+        assert!(key_share_scalar.unwrap() != Scalar::zero(), "Key share should not be zero");
+    }
 }
