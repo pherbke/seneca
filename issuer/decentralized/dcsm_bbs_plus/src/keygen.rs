@@ -1,9 +1,14 @@
-use bls12_381::Scalar;
+use bls12_381::{Scalar,G1Projective};
 use ff::Field; // Required for Scalar::random
 use rand::thread_rng; // For randomness
 use shamirsecretsharing::*; // For Shamir secret sharing
 use std::collections::HashMap;
 use std::convert::TryInto; // For converting slices to arrays
+use light_poseidon::{Poseidon, PoseidonHasher};
+use ark_bn254::Fr;
+use ark_ff::{BigInteger, PrimeField};
+use group::GroupEncoding;
+use subtle::ConstantTimeEq;
 
 pub const DATA_SIZE: usize = 64;
 
@@ -23,6 +28,36 @@ impl Participant {
             public_share: None,
         }
     }
+}
+
+/// Struct for holding a ZK proof.
+#[derive(Clone)]  // This will automatically implement the Clone trait for ZkProof
+pub struct ZkProof {
+    pub commitment: G1Projective,  // The commitment to the secret
+    pub response: Scalar,  // The response in the ZK proof
+}
+
+// Helper function to get a 32-byte array from BigInteger
+fn bigint_to_32_bytes_be(bigint: &impl BigInteger) -> [u8; 32] {
+    let bytes = bigint.to_bytes_be();
+    let mut output = [0u8; 32];
+    if bytes.len() > 32 {
+        output.copy_from_slice(&bytes[bytes.len() - 32..]);
+    } else {
+        output[32 - bytes.len()..].copy_from_slice(&bytes);
+    }
+    output
+}
+
+fn bigint_to_64_bytes_le(bigint: &impl BigInteger) -> [u8; 64] {
+    let bytes = bigint.to_bytes_le();
+    let mut output = [0u8; 64];
+    if bytes.len() > 64 {
+        output[..64].copy_from_slice(&bytes[..64]);
+    } else {
+        output[..bytes.len()].copy_from_slice(&bytes);
+    }
+    output
 }
 
 /// DKG manager for handling key generation and participant management.
@@ -89,8 +124,130 @@ impl DKG {
 
             participant.key_share = Some(y.to_bytes().to_vec());
         }
-
         Ok(())
+    }
+
+    pub fn generate_commitment_with_proof(&self, participant_id: usize) -> Result<(Vec<u8>, ZkProof), &'static str> {
+        // Retrieve the participant's key share
+        let participant = self.participants.get(&participant_id)
+            .ok_or("Participant not found")?;
+
+        let key_share = participant.key_share
+            .as_ref()
+            .ok_or("Key share not found for participant")?;
+
+        // Convert the key share into a field element
+        let key_share_scalar = Scalar::from_bytes(&key_share[..32].try_into().unwrap()).unwrap();
+        println!("Key share scalar: {:?}", key_share_scalar);
+
+        // Initialize Poseidon hasher for commitment
+        let mut poseidon = Poseidon::<Fr>::new_circom(1).unwrap();
+        let key_share_as_field_element = Fr::from_be_bytes_mod_order(&key_share[..32]);
+
+        // Generate commitment using Poseidon
+        let commitment = poseidon.hash(&[key_share_as_field_element]).unwrap();
+        let bigint = commitment.into_bigint();
+        let commitment_bytes = bigint.to_bytes_be();
+        println!("Generated commitment bytes: {:?}", commitment_bytes);
+
+        // Generate ZK proof (Schnorr-like protocol)
+        let mut rng = thread_rng();
+        let random_scalar = Scalar::random(&mut rng);
+        let random_commitment = G1Projective::generator() * random_scalar;
+        println!("Random scalar: {:?}", random_scalar);
+        println!("Random commitment: {:?}", random_commitment);
+
+        // Serialize the random commitment to bytes (uncompressed)
+        let random_commitment_bytes_array = random_commitment.to_bytes();
+        let random_commitment_bytes = random_commitment_bytes_array.as_ref();
+
+        // Create a new Poseidon hasher for computing the challenge
+        let mut poseidon_for_challenge = Poseidon::<Fr>::new_circom(2).unwrap();
+
+        // Generate challenge: Poseidon hash of the key share and the random commitment
+        let challenge = poseidon_for_challenge.hash(&[
+            key_share_as_field_element,
+            Fr::from_be_bytes_mod_order(&random_commitment_bytes)
+        ]).unwrap();
+        println!("Generated challenge: {:?}", challenge);
+
+        // Convert challenge into a Scalar
+        let challenge_bigint = challenge.into_bigint();
+        let challenge_bytes_wide = bigint_to_64_bytes_le(&challenge_bigint);
+        let challenge_scalar = Scalar::from_bytes_wide(&challenge_bytes_wide);
+        println!("Challenge scalar: {:?}", challenge_scalar);
+
+        // Compute response: response = random_scalar - (challenge_scalar * key_share_scalar)
+        let response = random_scalar - (challenge_scalar * key_share_scalar);
+        println!("Response scalar: {:?}", response);
+
+        // Return the commitment bytes and ZkProof
+        let zk_proof = ZkProof {
+            commitment: random_commitment,
+            response,
+        };
+
+        Ok((commitment_bytes, zk_proof))
+    }
+
+    pub fn verify_commitment_with_proof(
+        &self,
+        participant_id: usize,
+        commitment_bytes: Vec<u8>,
+        zk_proof: ZkProof,
+    ) -> Result<bool, &'static str> {
+        // Retrieve the participant's key share
+        let participant = self.participants.get(&participant_id)
+            .ok_or("Participant not found")?;
+
+        let key_share = participant.key_share
+            .as_ref()
+            .ok_or("Key share not found for participant")?;
+
+        // Convert the key share into a field element
+        let key_share_scalar = Scalar::from_bytes(&key_share[..32].try_into().unwrap()).unwrap();
+        println!("Key share scalar: {:?}", key_share_scalar);
+
+        // Recalculate the commitment using Poseidon
+        let mut poseidon = Poseidon::<Fr>::new_circom(1).unwrap();
+        let key_share_as_field_element = Fr::from_be_bytes_mod_order(&key_share[..32]);
+        let recalculated_commitment = poseidon.hash(&[key_share_as_field_element]).unwrap();
+        let recalculated_commitment_bytes = recalculated_commitment.into_bigint().to_bytes_be();
+
+        // Ensure recalculated commitment matches the provided commitment
+        if commitment_bytes != recalculated_commitment_bytes {
+            println!("Commitment bytes mismatch! Recalculated: {:?}, Provided: {:?}", recalculated_commitment_bytes, commitment_bytes);
+            return Ok(false);
+        }
+
+        // Recreate the challenge using the key share and the random commitment from zk_proof
+        let random_commitment_bytes = zk_proof.commitment.to_bytes();
+        let random_commitment_as_field = Fr::from_be_bytes_mod_order(random_commitment_bytes.as_ref());
+
+        let mut poseidon_for_challenge = Poseidon::<Fr>::new_circom(2).unwrap();
+        let challenge = poseidon_for_challenge.hash(&[
+            key_share_as_field_element,
+            random_commitment_as_field
+        ]).unwrap();
+        println!("Recreated challenge: {:?}", challenge);
+
+        // Convert challenge into a Scalar
+        let challenge_bigint = challenge.into_bigint();
+        let challenge_bytes_wide = bigint_to_64_bytes_le(&challenge_bigint);
+        let challenge_scalar = Scalar::from_bytes_wide(&challenge_bytes_wide);
+        println!("Challenge scalar: {:?}", challenge_scalar);
+
+        // Verify proof: response * G == random_commitment + challenge * key_share * G
+        let lhs = G1Projective::generator() * zk_proof.response;
+        let rhs = zk_proof.commitment + (G1Projective::generator() * (challenge_scalar * key_share_scalar));
+
+        // Compare both sides
+        let proof_valid = lhs == rhs;
+        if !proof_valid {
+            println!("Proof invalid: lhs != rhs. LHS: {:?}, RHS: {:?}", lhs, rhs);
+        }
+
+        Ok(proof_valid)
     }
 
     /// Reconstructs the master secret from a subset of participant shares using Lagrange interpolation.
@@ -104,7 +261,7 @@ impl DKG {
         for (i, (x_i, y_i)) in shares.iter().enumerate() {
             let mut numerator = Scalar::one();
             let mut denominator = Scalar::one();
-
+            // Calculate the numerator and denominator for the Lagrange interpolation
             for (j, (x_j, _)) in shares.iter().enumerate() {
                 if i != j {
                     let x_i_scalar = Scalar::from(*x_i as u64);
@@ -113,10 +270,10 @@ impl DKG {
                     denominator *= x_j_scalar - x_i_scalar;
                 }
             }
-
+            // Convert the share to a scalar
             let y_i_array: [u8; 32] = y_i[..32].try_into().expect("Failed to convert share to array");
             let y_i_scalar = Scalar::from_bytes(&y_i_array).unwrap();
-
+            // Add the share to the secret
             secret += y_i_scalar * numerator * denominator.invert().unwrap();
         }
 
@@ -224,4 +381,53 @@ mod tests {
 
         assert_eq!(reconstructed_secret, original_secret_scalar, "Reconstructed secret should match the original master secret");
     }
+
+    #[test]
+    fn test_generate_commitment_with_proof() {
+        let mut dkg = DKG::new(3, 5);
+
+        // Generate master secret and distribute shares
+        dkg.generate_master_secret();
+        dkg.generate_polynomial_and_shares().expect("Failed to distribute shares");
+
+        // Generate commitment and ZK proof for participant 1
+        let (commitment_bytes, zk_proof) = dkg.generate_commitment_with_proof(1).expect("Failed to generate commitment with ZK proof");
+
+        // Verify that the commitment is non-empty and has the correct length
+        assert_eq!(commitment_bytes.len(), 32, "Commitment length should be 32 bytes");
+        assert_ne!(commitment_bytes, vec![0u8; 32], "Commitment should not be all zeros");
+
+        // Verify the proof structure
+        assert!(zk_proof.response != Scalar::zero(), "Response in ZK proof should not be zero");
+        assert!(zk_proof.commitment != G1Projective::identity(), "Commitment in ZK proof should not be identity element");
+
+        println!("Commitment and ZK proof for participant 1: {:?}", commitment_bytes);
+    }
+
+    #[test]
+    fn test_verify_commitment_with_proof() {
+        let mut dkg = DKG::new(3, 5);
+
+        // Generate master secret and distribute shares
+        dkg.generate_master_secret();
+        dkg.generate_polynomial_and_shares().expect("Failed to distribute shares");
+
+        // Generate commitment and ZK proof for participant 1
+        let (commitment_bytes, zk_proof) = dkg
+            .generate_commitment_with_proof(1)
+            .expect("Failed to generate commitment with ZK proof");
+
+        // Now verify the commitment and ZK proof
+        let is_valid = dkg
+            .verify_commitment_with_proof(1, commitment_bytes.clone(), zk_proof.clone())
+            .expect("Failed to verify ZK proof");
+
+        // Assert that the ZK proof is valid
+        assert!(is_valid, "The ZK proof should be valid for participant 1");
+
+        // Print out debugging information
+        println!("ZK proof verification passed for participant 1");
+    }
+
+
 }
