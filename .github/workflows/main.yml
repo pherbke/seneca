@@ -13,15 +13,18 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     
     - name: Set up Rust
-      uses: actions-rs/toolchain@v1
+      uses: actions-rs/toolchain@v2
       with:
         toolchain: stable
         components: clippy
         profile: minimal
-    
+
+    - name: Set output
+      run: echo "my_var=some_value" >> $GITHUB_ENV
+  
     - name: Cache cargo registry
       uses: actions/cache@v2
       with:
