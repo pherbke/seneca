@@ -1,0 +1,73 @@
+name: Rust CI/CD
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        rust: [stable]
+
+    steps:
+    # Step 1: Checkout the code
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    # Step 2: Install Rust
+    - name: Set up Rust
+      uses: actions-rs/toolchain@v1
+      with:
+        toolchain: ${{ matrix.rust }}
+        override: true
+
+    # Step 3: Cache Rust dependencies (optional, improves build times)
+    - name: Cache cargo registry
+      uses: actions/cache@v3
+      with:
+        path: ~/.cargo/registry
+        key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-cargo-registry-
+
+    - name: Cache cargo build
+      uses: actions/cache@v3
+      with:
+        path: target
+        key: ${{ runner.os }}-cargo-build-${{ hashFiles('**/Cargo.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-cargo-build-
+
+    # Step 4: Run linting (optional)
+    - name: Run clippy (Rust linter)
+      run: cargo clippy --all-targets --all-features -- -D warnings
+
+    # Step 5: Build the project
+    - name: Build the project
+      run: cargo build --all
+
+    # Step 6: Ensure no empty test files
+    - name: Check for empty test files
+      run: |
+        for file in $(find issuer/decentralized/dcsm_bbs_plus/tests -name "*.rs"); do
+          if ! grep -q "#[test]" "$file"; then
+            echo "Error: $file has no tests!"
+            exit 1
+          fi
+        done
+        echo "All test files contain tests."
+
+    # Step 7: Run the tests
+    - name: Run tests
+      run: cargo test -- --nocapture
+
+    # Step 8: Notify build success
+    - name: Notify success
+      run: echo "CI pipeline completed successfully!"
