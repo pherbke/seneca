@@ -8,12 +8,16 @@ on:
     branches:
       - main
 
+env:
+  CARGO_TERM_COLOR: always
+
 jobs:
-  build:
+  ubuntu-build:
+    name: Build and Test on Ubuntu
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     
     - name: Set up Rust
       uses: actions-rs/toolchain@v1
@@ -21,27 +25,27 @@ jobs:
         toolchain: stable
         components: clippy
         profile: minimal
-    
+
     - name: Cache cargo registry
-      uses: actions/cache@v2
+      uses: actions/cache@v3
       with:
         path: ~/.cargo/registry
         key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
         restore-keys: |
           ${{ runner.os }}-cargo-registry-
-    
+
     - name: Cache cargo build
-      uses: actions/cache@v2
+      uses: actions/cache@v3
       with:
         path: target
         key: ${{ runner.os }}-cargo-build-${{ hashFiles('**/Cargo.lock') }}
         restore-keys: |
           ${{ runner.os }}-cargo-build-
-    
+
     - name: Run clippy (Rust linter)
       working-directory: issuer/decentralized/dcsm_bbs_plus
       run: cargo clippy --all-targets --all-features -- -D warnings
-    
+
     - name: Build the project
       working-directory: issuer/decentralized/dcsm_bbs_plus
       run: cargo build --verbose
@@ -49,3 +53,45 @@ jobs:
     - name: Run tests
       working-directory: issuer/decentralized/dcsm_bbs_plus
       run: cargo test --verbose
+
+  windows-build:
+    name: Build and Test on Windows
+    runs-on: windows-latest
+    strategy:
+      matrix:
+        target: [
+          i686-pc-windows-gnu,
+          i686-pc-windows-msvc,
+          x86_64-pc-windows-gnu,
+          x86_64-pc-windows-msvc,
+        ]
+        cfg_release_channel: [nightly, stable]
+      max-parallel: 2
+      fail-fast: false
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: disable git eol translation (Windows-specific)
+      run: git config --global core.autocrlf false
+
+    - name: Install Rustup using win.rustup.rs
+      run: |
+        $ProgressPreference = "SilentlyContinue"
+        Invoke-WebRequest https://win.rustup.rs/ -OutFile rustup-init.exe
+        .\rustup-init.exe -y --default-host=x86_64-pc-windows-msvc --default-toolchain=none
+        del rustup-init.exe
+        rustup target add ${{ matrix.target }}
+      shell: powershell
+
+    - name: Add mingw32 to path for i686-gnu
+      run: echo "C:\msys64\mingw32\bin" >> $GITHUB_PATH
+      if: matrix.target == 'i686-pc-windows-gnu'
+
+    - name: Add mingw64 to path for x86_64-gnu
+      run: echo "C:\msys64\mingw64\bin" >> $GITHUB_PATH
+      if: matrix.target == 'x86_64-pc-windows-gnu'
+
+    - name: Build and Test on Windows
+      shell: cmd
+      run: ci\build_and_test.bat
