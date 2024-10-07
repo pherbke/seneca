@@ -1,14 +1,17 @@
 import { ResumeFormType } from "@/db/cvs";
 import {
   getJobApplicantsByCompany,
-  updateJobApplication
+  updateJobApplication,
 } from "@/db/job-applications";
 import { formatDateString } from "@/lib/helpers";
 import {
   Button,
   Card,
+  Checkbox,
   Divider,
   Flex,
+  Modal,
+  Space,
   Table,
   TableColumnsType,
   Tag,
@@ -18,7 +21,9 @@ import {
 import { useSession } from "next-auth/react";
 import React, { ReactNode, useEffect, useState } from "react";
 import ResumePreviewModal from "./resume-preview-modal";
-import { sendVCRequest } from "@/lib/actions/server-actions";
+import { handleRequestVC } from "@/lib/actions/server-actions";
+
+const CheckboxGroup = Checkbox.Group;
 
 type DataType = {
   key: string;
@@ -29,7 +34,6 @@ type DataType = {
   resume?: ResumeFormType;
   actions: ReactNode;
 };
-
 
 const columns: TableColumnsType<DataType> = [
   {
@@ -77,71 +81,51 @@ const columns: TableColumnsType<DataType> = [
   },
 ];
 
+const plainOptions = [
+  "Personal Info",
+  "Work Experience",
+  "Education and Training",
+];
+const defaultCheckedList = ["Education and Training"];
+
 const CompanyJobApplicantsList = () => {
   const session = useSession();
   const user = session.data?.user;
   const [data, setData] = useState<DataType[]>([]);
   const [showResume, setShowResume] = useState(false);
+  const [selectedApplication, setSelectedApplication] = useState<string | null>(
+    null,
+  );
+  const [checkedList, setCheckedList] = useState<string[]>(defaultCheckedList);
+
   const [selectedResume, setSelectedResume] = useState<ResumeFormType>();
   const handlePreviewResume = (resume: ResumeFormType) => {
     setShowResume(true);
     setSelectedResume(resume);
   };
+
   const handlePreviewResumeClose = () => {
     setShowResume(false);
   };
 
-  const handleRequestVC = async (applicationId: string, userId: string) => {
-    const pd = {
-      id: "d49ee616-0e8d-4698-aff5-2a8a2362652d",
-      name: "UniversityDegree",
-      format: {
-        "vc+sd-jwt": {
-          alg: ["ES256"],
-        },
-        "vp+sd-jwt": {
-          alg: ["ES256", "ES384"],
-        },
-      },
-      input_descriptors: [
-        {
-          id: "abd4acb1-1dcb-41ad-8596-ceb1401a69c7",
-          format: {
-            "vc+sd-jwt": {
-              alg: ["ES256", "ES384"],
-            },
-          },
-          constraints: {
-            fields: [
-              {
-                path: [
-                  "$.credentialSubject.degree",
-                  "$.vc.credentialSubject.degree",
-                ],
-              },
-            ],
-          },
-          limit_disclosure: "required",
-        },
-      ],
-    };
-    try {
-      const res = await sendVCRequest(applicationId, pd);
-      if (true) {
-        message.success("Request sent!");
-        await updateJobApplication(
-          applicationId,
-          undefined,
-          undefined,
-          undefined,
-          "VP Requested",
-        );
-      }
-    } catch (error) {
-      console.log(error);
-    }
+  const onChange = (list: string[]) => {
+    setCheckedList(list);
   };
 
+  const handleOptionsModalOKClick = async () => {
+    const res = await handleRequestVC(
+      selectedApplication!,
+      checkedList,
+      user?.name!,
+    );
+    if (res) message.success("Request sent!");
+    else message.error("Error sending request");
+    setSelectedApplication(null);
+  };
+
+  const handleClickRequestVC = async (applicationId: string) => {
+    setSelectedApplication(applicationId);
+  };
   useEffect(() => {
     const fetchData = async () => {
       const data = await getJobApplicantsByCompany(user?.id!);
@@ -166,7 +150,7 @@ const CompanyJobApplicantsList = () => {
                   View resume
                 </Button>
 
-                <Button onClick={() => handleRequestVC(e.id, e.userId)}>
+                <Button onClick={() => handleClickRequestVC(e.id)}>
                   Request VC
                 </Button>
               </Flex>
@@ -201,6 +185,19 @@ const CompanyJobApplicantsList = () => {
           handleClose={handlePreviewResumeClose}
         />
       ) : null}
+      <Modal
+        open={selectedApplication ? true : false}
+        closeIcon={false}
+        onCancel={() => setSelectedApplication(null)}
+        onOk={handleOptionsModalOKClick}
+      >
+        <CheckboxGroup
+          style={{ display: "flex", flexDirection: "column", gap: 10 }}
+          options={plainOptions}
+          value={checkedList}
+          onChange={onChange}
+        />
+      </Modal>
     </div>
   );
 };

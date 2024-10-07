@@ -173,6 +173,22 @@ const authOptions = {
             token: await generateJWT({ id: this.id, role: "company" }),
             role: "company",
           };
+        } else if (
+          credentials?.username === "fuberlin" &&
+          credentials.password === "password"
+        ) {
+          const user = await prisma.company.findFirst({
+            where: {
+              email: "info@fu-berlin.de",
+            },
+          });
+          return {
+            id: user?.id!,
+            email: "info@fu-berlin.de",
+            name: user?.name!,
+            token: await generateJWT({ id: this.id, role: "company" }),
+            role: "company",
+          };
         }
         if (credentials?.email && credentials?.password) {
           const user = await getUserByEmail(credentials.email);

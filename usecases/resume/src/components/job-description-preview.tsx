@@ -3,7 +3,7 @@ import { Button, Card, Divider, Flex, Space } from "antd";
 import { useSession } from "next-auth/react";
 import Image from "next/image";
 import React from "react";
-import axios from 'axios';
+import axios from "axios";
 
 type JobDescriptionPreviewProps = {
   selectedJobListing: JobWithCompany;
@@ -22,10 +22,9 @@ const JobDescriptionPreview = ({
     const applicationId = selectedJobListing.id;
 
     if (!userId || !applicationId) {
-      console.error('User ID or Application ID is missing');
+      console.error("User ID or Application ID is missing");
       return;
     }
-
 
     applyButtonClick();
   };

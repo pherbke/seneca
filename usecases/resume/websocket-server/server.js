@@ -58,7 +58,9 @@ app.post("/send-message", (req, res) => {
   if (clients.has(clientId)) {
     const targetClient = clients.get(clientId);
     if (targetClient.readyState === WebSocket.OPEN) {
-      targetClient.send(JSON.stringify({ message, destination }));
+      destination
+        ? targetClient.send(JSON.stringify({ message, destination }))
+        : targetClient.send(JSON.stringify(message));
       res.status(200).send("Message sent");
     } else {
       res.status(400).send("Client is not connected");

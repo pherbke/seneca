@@ -183,7 +183,7 @@ const SignIn = () => {
                 </Button>
                 <Divider>or</Divider>
                 <Button size="large" onClick={handleSignInWithVP}>
-                  Sign In with Login VP
+                  Sign In with VP
                 </Button>
                 <Divider></Divider>
                 <Space>
@@ -203,7 +203,7 @@ const SignIn = () => {
         <Space></Space>
         <Divider>QRCode Authentication</Divider>
         <Flex justify="center">
-          <QRCode value={vpLink} />
+          <QRCode size={320} value={vpLink} />
         </Flex>
       </Modal>
     </AntLayout>

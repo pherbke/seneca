@@ -3,11 +3,13 @@
 import { createUser, getUserByEmail } from "@/db/users-db";
 import { User } from "@prisma/client";
 import axios from "axios";
-import { jwk } from "../certs/issuer-jwk";
 import jwt from "jsonwebtoken";
 import fs from "fs";
 import { v4 as uuid } from "uuid";
-import { getJobApplicationsById } from "@/db/job-applications";
+import {
+  getJobApplicationsById,
+  updateJobApplication,
+} from "@/db/job-applications";
 import { getCurrentUser } from "../server-side-session";
 import { importJWK, jwtVerify } from "jose";
 
@@ -33,63 +35,15 @@ export async function signUp({
 }
 
 export async function generateLoginVC(userData: Omit<User, "password">) {
-  const credentialData = {
-    "@context": [
-      "https://www.w3.org/2018/credentials/v1",
-      "https://www.w3.org/2018/credentials/examples/v1",
-    ],
-    id: "http://example.gov/credentials/3732",
-    type: ["VerifiableCredential", "LoginCredential"],
-    issuer: {
-      id: process.env.SERVER_URL,
-    },
-    issuanceDate: new Date(),
-    credentialSubject: {
-      userId: userData.id,
-      email: userData.email,
-    },
+  const credentialSubject = {
+    userId: userData.id,
+    email: userData.email,
   };
-
-  const requestBody = {
-    issuerKey: {
-      type: "jwk",
-      jwk: jwk,
-    },
-    issuerDid: process.env.ISSUER_DID,
-    credentialConfigurationId: "TrusCV_login_jwt_vc",
-    credentialData: {
-      "@context": [
-        "https://www.w3.org/2018/credentials/v1",
-        "https://www.w3.org/2018/credentials/examples/v1",
-      ],
-      id: "http://example.gov/credentials/3732",
-      type: ["VerifiableCredential", "LoginCredential"],
-      issuer: {
-        id: "did:web:vc.transmute.world",
-      },
-      issuanceDate: new Date(),
-      credentialSubject: {
-        userId: userData.id,
-        email: userData.email,
-      },
-    },
-    mapping: {
-      id: "<uuid>",
-      issuer: {
-        id: "<issuerDid>",
-      },
-      credentialSubject: {
-        id: "<subjectDid>",
-      },
-      issuanceDate: "<timestamp>",
-      expirationDate: "<timestamp-in:365d>",
-    },
-  };
-
+  console.log(credentialSubject);
   const response = await axios({
     method: "post",
     url: process.env.EXTERNAL_ISSUER_URL,
-    data: requestBody,
+    data: { credentialSubject, type: ["LoginCredential"] },
   });
 
   if (response.status === 200) {
@@ -132,11 +86,10 @@ export async function verifyToken(jwk: any, token: any) {
   }
 }
 
-
-
 export async function sendVCRequest(
   applicationId: string,
   presentationDefinition: any,
+  companyName: string,
 ) {
   try {
     const data = await getJobApplicationsById(applicationId);
@@ -149,8 +102,8 @@ export async function sendVCRequest(
         id: uuid(),
         read: false,
         title: "Verifiable Presentation Request",
-        message: "TU Berlin wants you to verifiy your claims",
-        timestamp: new Date(),
+        message: `${companyName} wants you to verifiy your claims`,
+        timestamp: new Date().toUTCString(),
         applicationId: applicationId,
         pd: { ...presentationDefinition },
       },
@@ -160,7 +113,6 @@ export async function sendVCRequest(
     return false;
   }
 }
-
 
 export async function createPubSubTopicAndSubscribe(userId: string) {
   try {
@@ -182,3 +134,62 @@ export async function createPubSubTopicAndSubscribe(userId: string) {
     console.error("Error creating pub/sub topic: ", error);
   }
 }
+export const handleRequestVC = async (
+  applicationId: string,
+  pdOptions: string[],
+  companyName: string,
+): Promise<boolean> => {
+  //TODO: make it use the pdOption to select the pd dynamically
+  console.log(pdOptions);
+
+  const pd = {
+    id: "d49ee616-0e8d-4698-aff5-2a8a2362652d",
+    name: "UniversityDegree",
+    format: {
+      "vc+sd-jwt": {
+        alg: ["ES256"],
+      },
+      "vp+sd-jwt": {
+        alg: ["ES256", "ES384"],
+      },
+    },
+    input_descriptors: [
+      {
+        id: "abd4acb1-1dcb-41ad-8596-ceb1401a69c7",
+        format: {
+          "vc+sd-jwt": {
+            alg: ["ES256", "ES384"],
+          },
+        },
+        constraints: {
+          fields: [
+            {
+              path: [
+                "$.credentialSubject.degree",
+                "$.vc.credentialSubject.degree",
+              ],
+            },
+          ],
+        },
+        limit_disclosure: "required",
+      },
+    ],
+  };
+  try {
+    const res = await sendVCRequest(applicationId, pd, companyName);
+    if (res) {
+      await updateJobApplication(
+        applicationId,
+        undefined,
+        undefined,
+        undefined,
+        "VP Rquested",
+      );
+      return true;
+    }
+  } catch (error) {
+    console.log(error);
+    return false;
+  }
+  return false;
+};

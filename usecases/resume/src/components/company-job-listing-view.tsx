@@ -39,6 +39,7 @@ interface Job {
 const cardStyle: React.CSSProperties = {
   width: 300,
   height: 420,
+  border: "1px solid black",
   display: "flex",
   flexDirection: "column",
   justifyContent: "space-around",

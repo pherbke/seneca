@@ -6,8 +6,8 @@ export async function GET(request: NextRequest) {
 
   const url = new URL(request.url);
   const stateParam = url.searchParams.get("state") || uuidv4();
-  const pd = url.searchParams.get("pd");
-  let request_uri = `${serverURL}/api/verifier/get-vp-request/${stateParam}?pd=${pd}`;
+  const presentation_def = url.searchParams.get("pd");
+  let request_uri = `${serverURL}/api/verifier/get-vp-request/${stateParam}?pd=${presentation_def}`;
 
   const vpRequest = buildVP(serverURL, request_uri);
 

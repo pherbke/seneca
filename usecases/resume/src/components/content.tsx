@@ -34,7 +34,7 @@ import { JsonView, allExpanded, defaultStyles } from "react-json-view-lite";
 import "react-json-view-lite/dist/index.css";
 
 import { updateJobApplication } from "@/db/job-applications";
-
+import { useRouter } from "next/navigation";
 
 interface vpData {
   vc: {
@@ -152,7 +152,7 @@ const useNotifications = (userId: string | undefined) => {
 
 const Content: FC<ContentProps> = ({ children, title }) => {
   const session = useSession();
-
+  const router = useRouter();
   const {
     socket,
     wsClientId,
@@ -236,7 +236,7 @@ const Content: FC<ContentProps> = ({ children, title }) => {
         }
       } catch (error) {
         console.error("Axios request failed:", error);
-        message.error("DID could not be resolved");
+        // message.error("DID could not be resolved");
       }
     }
   };
@@ -284,13 +284,14 @@ const Content: FC<ContentProps> = ({ children, title }) => {
               userId: session.data?.user.id,
               id: uuid(),
               read: false,
-              vpData: data.message,
+              vpData: replyTopic === "" ? { ...data.message } : data,
               title: "Verifiable Presentation Submission",
               message: `${session.data?.user.name} has submitted Verifiable Presentation`,
               timestamp: new Date(),
               applicationId: selectedApplicationID,
             },
           });
+          console.log(res.statusText);
           console.log(res.statusText);
         } else {
           setWsClientId(data.clientId);
@@ -387,7 +388,7 @@ const Content: FC<ContentProps> = ({ children, title }) => {
                 <Space></Space>
                 <Divider>Scan to submit VP</Divider>
                 <Flex justify="center">
-                  <QRCode value={vpLink} />
+                  <QRCode size={320} value={vpLink} />
                 </Flex>
               </Modal>
 
@@ -396,6 +397,7 @@ const Content: FC<ContentProps> = ({ children, title }) => {
                 onCancel={() => {
                   setShowVP(false);
                   setEbsiResponse(null);
+                  router.refresh();
                 }}
                 footer={
                   <>

@@ -20,7 +20,7 @@ import FormItem from "antd/es/form/FormItem";
 import { useSession } from "next-auth/react";
 import ResumeCard from "./resume-card";
 import { NextResponse } from "next/server";
-import axios from 'axios';
+import axios from "axios";
 
 const MyLibrary = () => {
   const [isCVModalOpen, setIsCVModalOpen] = useState(false);
@@ -119,8 +119,6 @@ const MyLibrary = () => {
 
   const [data, setData] = useState(null);
   const [error, setError] = useState(null);
-
-
 
   return (
     <div>

@@ -28,14 +28,14 @@ const ResumePreviewExperienceInfo = ({
           <p>{`${workExperience.summary}`}</p>
           {mode === "company" ? (
             <>
-              <Button
+              {/* <Button
                 type="primary"
                 onClick={() => {
                   alert("Requesting verification for this work experience...");
                 }}
               >
                 Request VC
-              </Button>
+              </Button> */}
             </>
           ) : null}
         </div>
@@ -50,18 +50,13 @@ const ResumePreviewExperienceInfo = ({
           <b>{`${education.from} - ${education.to} (${education.city}, ${education.country})`}</b>
           <p>{`${education.title} at ${education.institutionName} `}</p>
           <p>{`${education.website}`}</p>
-          {mode === "company" ? (
+          {/* {mode === "company" ? (
             <>
-              <Button
-                type="primary"
-                onClick={() => {
-                  alert("Requesting verification for this education...");
-                }}
-              >
+              <Button type="primary" onClick={() => handleRequestVC()}>
                 Request VC
               </Button>
             </>
-          ) : null}
+          ) : null} */}
         </div>
       ))}
     </div>

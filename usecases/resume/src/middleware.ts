@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { issuerConfig } from "@/lib/issuer-config";
+import { verifierConfig } from "@/lib/verifier-config";
 
 export async function middleware(request: NextRequest) {
-  return NextResponse.json({ ...issuerConfig });
+  return NextResponse.json({ ...verifierConfig });
 }
 
 export const config = {

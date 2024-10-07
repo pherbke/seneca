@@ -1,5 +1,3 @@
-//user-job-applications-list.tsx
-
 import React, { useMemo, useState } from "react";
 import {
   Button,
@@ -89,16 +87,16 @@ const JobApplicationsList = ({ jobApplications }: JobApplicationsListProps) => {
       dataIndex: "VPRequest",
       key: "VPRequest",
       render: (_, record) => {
-        if (record.applicationStatus === "VP Requested") {
+        if (record.applicationStatus === "VP Rquested") {
           return (
             <Button type="primary" onClick={() => showVPRequest(record.key)}>
               Show VP Request
             </Button>
           );
         } else if (record.applicationStatus === "VP verified") {
-          return "Already verified!";
+          return "Verification Successful";
         } else {
-          return "No";
+          return "Not yet";
         }
       },
     },
@@ -139,7 +137,7 @@ const JobApplicationsList = ({ jobApplications }: JobApplicationsListProps) => {
         <Space></Space>
         <Divider>Scan to submit VP</Divider>
         <Flex justify="center">
-          <QRCode value={vpLink} />
+          <QRCode size={320} value={vpLink} />
         </Flex>
       </Modal>
     </div>
