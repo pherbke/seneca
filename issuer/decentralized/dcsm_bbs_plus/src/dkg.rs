@@ -8,7 +8,6 @@ use neptune::{Strength};
 use std::convert::TryInto;
 use group::Curve;
 use typenum::{U3};
-// For converting bytes
 
 /// The length of the data slice required by the shamirsecretsharing crate (64 bytes)
 pub const DATA_SIZE: usize = 64;

@@ -6,7 +6,6 @@ use ark_std::rand::SeedableRng;
 use log::info;
 
 /// Generates a BBS+ signature over a message using the master secret (private key).
-///
 /// # Arguments
 /// * `master_secret` - The private key as a Scalar.
 /// * `message` - The message to sign as a Scalar.

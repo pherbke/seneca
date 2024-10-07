@@ -5,7 +5,6 @@ use ark_std::rand::SeedableRng;
 
 #[cfg(test)]
 mod tests {
-    use ark_bls12_381::G1Projective;
     use dcsm_bbs_plus::bbs_plus::{bbs_plus_sign, bbs_plus_verify, generate_keys};
     use super::*;
 
