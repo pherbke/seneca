@@ -197,6 +197,7 @@ app.post("/direct_post", async (req, res) => {
 app.post("/token", async (req, res) => {
   const { client_id, code, code_verifier, grant_type, user_pin } = req.body;
   const pre_authorized_code = req.body["pre-authorized_code"];
+
   let credential_identifier;
   if (grant_type == "urn:ietf:params:oauth:grant-type:pre-authorized_code") {
     console.log("pre-auth code flow: ", pre_authorized_code);
@@ -226,6 +227,8 @@ app.post("/token", async (req, res) => {
     credential_identifier
   );
   accessTokens.set(client_id, generatedAccessToken);
+
+  console.log(generatedAccessToken)
 
   res.json({
     access_token: generatedAccessToken,

@@ -323,7 +323,7 @@ app.get("/credential-offer/:id", (req, res) => {
       },
       "urn:ietf:params:oauth:grant-type:pre-authorized_code": {
         "pre-authorized_code": pre_auth_code ?? randomUUID(),
-        user_pin_required: false,
+        user_pin_required: true,
       },
     },
   };
