@@ -20,24 +20,58 @@ import React, { useEffect, useState } from "react";
 import { SignInOptions, signIn } from "next-auth/react";
 import useWebSocket from "@/lib/useWebsocket";
 
+// const loginCredentiaPD = {
+//   id: "046acbac-ea8d-4f95-8b57-f58dd178132b",
+//   name: "LoginCredential",
+//   format: {
+//     jwt_vc: {
+//       alg: ["ES256"],
+//     },
+//   },
+//   input_descriptors: [
+//     {
+//       id: "ef91319b-81a5-4f71-a602-de3eacccb543",
+//       constraints: {
+//         fields: [
+//           {
+//             path: ["$.credentialSubject.email"],
+//           },
+//         ],
+//       },
+//     },
+//   ],
+// };
+
 const loginCredentiaPD = {
-  id: "046acbac-ea8d-4f95-8b57-f58dd178132b",
+  id: "d49ee616-0e8d-4698-aff5-2a8a2362652d",
   name: "LoginCredential",
   format: {
     jwt_vc: {
-      alg: ["ES256"],
+      alg: ["ES256", "ES384"],
     },
   },
   input_descriptors: [
     {
-      id: "ef91319b-81a5-4f71-a602-de3eacccb543",
+      id: "abd4acb1-1dcb-41ad-8596-ceb1401a69c7",
+      format: {
+        jwt_vc: {
+          alg: ["ES256", "ES384"],
+        },
+      },
       constraints: {
         fields: [
           {
-            path: ["$.credentialSubject.email"],
+            path: ["$.credentialSubject.email", "$.vc.credentialSubject.email"],
           },
+          // {
+          //   path: [
+          //     "$.credentialSubject.userId",
+          //     "$.vc.credentialSubject.userId",
+          //   ],
+          // },
         ],
       },
+      limit_disclosure: "required",
     },
   ],
 };

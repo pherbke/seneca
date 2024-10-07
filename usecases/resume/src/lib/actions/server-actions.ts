@@ -144,12 +144,9 @@ export const handleRequestVC = async (
 
   const pd = {
     id: "d49ee616-0e8d-4698-aff5-2a8a2362652d",
-    name: "UniversityDegree",
+    name: "UniversityDegreeCredential",
     format: {
-      "vc+sd-jwt": {
-        alg: ["ES256"],
-      },
-      "vp+sd-jwt": {
+      jwt_vc: {
         alg: ["ES256", "ES384"],
       },
     },
@@ -157,12 +154,27 @@ export const handleRequestVC = async (
       {
         id: "abd4acb1-1dcb-41ad-8596-ceb1401a69c7",
         format: {
-          "vc+sd-jwt": {
+          jwt_vc: {
             alg: ["ES256", "ES384"],
           },
         },
         constraints: {
           fields: [
+            {
+              path: [
+                "$.credentialSubject.given_name",
+                "$.vc.credentialSubject.given_name",
+              ],
+            },
+            {
+              path: [
+                "$.credentialSubject.family_name",
+                "$.vc.credentialSubject.family_name",
+              ],
+            },
+            {
+              path: ["$.credentialSubject.gpa", "$.vc.credentialSubject.gpa"],
+            },
             {
               path: [
                 "$.credentialSubject.degree",
@@ -175,6 +187,7 @@ export const handleRequestVC = async (
       },
     ],
   };
+
   try {
     const res = await sendVCRequest(applicationId, pd, companyName);
     if (res) {

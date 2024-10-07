@@ -41,6 +41,7 @@ CREATE TABLE "JobApplication" (
     "cvId" TEXT NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "status" TEXT NOT NULL DEFAULT 'in review',
+    "vpRequestLink" TEXT,
 
     CONSTRAINT "JobApplication_pkey" PRIMARY KEY ("id")
 );
