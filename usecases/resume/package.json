@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "concurrently \"docker-compose up\" \"npx prisma migrate dev --name init\" \"npx prisma generate\" \"next dev\" \"ts-node src/app/api/test_redis/server.ts\"",
+    "dev": "concurrently \"docker-compose -f docker-compose-dev.yml up\" \"npx prisma migrate dev --name init\" \"npx prisma generate\" \"next dev\" \"ts-node src/app/api/test_redis/server.ts\"",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",

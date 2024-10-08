@@ -1,21 +1,24 @@
+version: '3'
 services:
-  postgres:
-    image: postgres:latest
-    container_name: postgres_database
-    environment:
-      POSTGRES_DB: postgres
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: admin
+  app:
+    build: .
+    command: node server.js
     ports:
-      - "5432:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - "3000:3000" # Map the app's port to a port on the host (if required)
+    env_file:
+      - .env.docker  # Load the .env file
 
-  redis:
-    image: redis:latest
-    container_name: redis
-    ports:
-      - "6379:6379"
+  # ws:
+  #   build: .
+  #   command: npm run ws
+  #   ports:
+  #     - "8080:8080" # Map the WebSocket server port to the host
+  #   env_file:
+  #     - .env  # Load the .env file
 
-volumes:
-  postgres_data:
+  # redis:
+  #   image: redis:latest
+  #   ports:
+  #     - "3030:3030" # Map Redis port to the host (if your Redis server is on port 3030)
+  #   env_file:
+  #     - .env  # Load the .env file
