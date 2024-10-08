@@ -108,6 +108,7 @@ export async function sendVCRequest(
         pd: { ...presentationDefinition },
       },
     });
+    return res;
   } catch (error) {
     console.log("Error sending vc request: ", error);
     return false;
